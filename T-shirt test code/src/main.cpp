@@ -1,29 +1,23 @@
-#include <Arduino.h>
-#include <Servo.h>
-#include <..\lib\controller\Controller.h>
+
+#include "cannon.h"
+
 
 Servo servoL;
 Servo servoR;
-Servo servoCannon;
-
 //Create the communications object. Use Serial for the communications.
 Controller controller(Serial3);
 
-void joystickCrontroll();
-void buttonControll();
-void cannonControll();
-double getVoltage();
+void joystickCrontrol();
 
 bool disconnected = false;
 double ERRORCORRETIONL = 4;
 
-
 void setup() {
   // put your setup code here, to run once:
-
+  
+  Cannon cannon(11);
   servoL.attach(9);
   servoR.attach(10);
-  servoCannon.attach(11);
 
   pinMode(12, OUTPUT);
   
@@ -45,10 +39,12 @@ void loop() {
 
   if (controller.connected()) {
     
-    //buttonControll();
+    joystickCrontrol();
 
-    joystickCrontroll();
-    cannonControll();
+    if (controller.joyButton(LEFT))
+      cannon.fire();
+    
+    cannon.changeAngle( controller.joystick(LEFT, Y) / 50 );
 
     disconnected = false;
 
@@ -60,64 +56,11 @@ void loop() {
   }
 }
 
-
-void buttonControll()
-{
-  if(controller.button(UP))
-    {
-      servoL.write(120);
-      Serial.println("Button UP");
-    }
-    else
-      servoL.write(94);
-  
-    if(controller.button(DOWN))
-    {
-      servoL.write(60);
-      Serial.println("Button DOWN");
-    }
-    else
-      servoL.write(94);
-}
-
-void joystickCrontroll()
+void joystickCrontrol()
 {
   double speedF = controller.joystick(RIGHT, Y) * 70 + 90;
   double speedLR = ( controller.joystick(RIGHT, X) * 70 * -1 );
 
   servoL.write( ( ( 180 - speedF ) + ERRORCORRETIONL + speedLR ) );
   servoR.write( ( ( speedF ) + ERRORCORRETIONL + speedLR ) );
-}
-
-
-void cannonControll()
-{
-  bool isSafe = false;
-  static double angle = 90;
-  angle -= controller.joystick(LEFT, Y) / 50;
-  double PSI = getVoltage() * (200 / 5.0);
-  double lowerPSI = 40;
-  double upperPSI = 150;
-
-  if(angle > 90)
-    angle = 90;
-
-  if(angle < 35)
-    angle = 35;
-  
-  if(controller.button(UP))
-    isSafe = true;
-
-  servoCannon.write(angle);
-
-  if( controller.dpad(LEFT) && isSafe && PSI > lowerPSI && PSI < upperPSI )
-    digitalWrite( 12, HIGH );
-  else
-    digitalWrite( 12, LOW );
-}
-
-
-double getVoltage()
-{
-  return analogRead(A0) * (5.0 / 1023);
 }
