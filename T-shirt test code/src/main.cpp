@@ -1,11 +1,10 @@
-
 #include "cannon.h"
-
 
 Servo servoL;
 Servo servoR;
 //Create the communications object. Use Serial for the communications.
 Controller controller(Serial3);
+Cannon cannon(11);
 
 void joystickCrontrol();
 
@@ -15,7 +14,6 @@ double ERRORCORRETIONL = 4;
 void setup() {
   // put your setup code here, to run once:
   
-  Cannon cannon(11);
   servoL.attach(9);
   servoR.attach(10);
 
@@ -25,6 +23,7 @@ void setup() {
   
   //initialize the receiver
   controller.init();
+  cannon.init();
   
   Serial.println("Waiting for connection...");
   while (!controller.connected()) { delay(10); }
@@ -41,7 +40,7 @@ void loop() {
     
     joystickCrontrol();
 
-    if (controller.joyButton(LEFT))
+    if (controller.dpad(LEFT))
       cannon.fire();
     
     cannon.changeAngle( controller.joystick(LEFT, Y) / 50 );

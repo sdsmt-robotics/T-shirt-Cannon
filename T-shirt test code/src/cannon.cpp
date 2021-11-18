@@ -1,6 +1,11 @@
-#include <cannon.h>
+#include "cannon.h"
 
-Cannon::Cannon(int pin)
+Cannon::Cannon(int _pin)
+{
+    pin = _pin;
+}
+
+void Cannon::init()
 {
     cannon.attach(pin);
 }
@@ -25,9 +30,9 @@ void Cannon::changeAngle(double input)
 
 bool Cannon::checkSafe()
 {
-    bool PSI = getPSI;
+    int PSI = getPSI();
 
-    if( PSI > lowerPSI && PSI < upperPSI && controller.button(UP) )
+    if( PSI > lowerPSI && PSI < upperPSI)
         canFire = true;
     else
         canFire = false;
@@ -38,7 +43,7 @@ bool Cannon::checkSafe()
 void Cannon::fire()
 {
     checkSafe();
-
+    
     if( canFire )
         digitalWrite( relayPin, HIGH );
     else
