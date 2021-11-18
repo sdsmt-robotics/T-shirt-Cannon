@@ -40,7 +40,7 @@ void loop() {
     
     joystickCrontrol();
 
-    if (controller.dpad(LEFT))
+    if (controller.dpad(LEFT) && controller.button(UP) )
       cannon.fire();
     
     cannon.changeAngle( controller.joystick(LEFT, Y) / 50 );
