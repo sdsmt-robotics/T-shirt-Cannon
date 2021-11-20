@@ -8,24 +8,32 @@
 class Cannon{
     
 private:
-    int pin;
-    int relayPin = 12;
+    int pin;                //for cannon motor
+    int relayPin;      //for firing
+    int fillPin;            //for ballast fill solenoid
+    int bleedPin;           //for ballast bleed solenoid
+    double PSI;
+    int desiredPSI = 100;
     bool canFire = false;
     double angle = 90;
     double lowerPSI = 40;
     double upperPSI = 150;
     Servo cannon;
 
-    int getPSI();
     bool checkSafe();
 
 public:
-    Cannon(int pin);
+    Cannon(int _pin, int fpin, int bpin, int rpin);
+    bool fired;
+    double getPSI();
     void init();
     void cannonControll();
     void setAngle(double input);
     void changeAngle(double input);
-    void fire();
+    bool barrelOpen();
+    void barrelClose();
+    bool ballastFill();    
+    void ballastBleed();
 
 };
 
