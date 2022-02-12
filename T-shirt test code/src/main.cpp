@@ -14,20 +14,25 @@ const int fireDelay = 200;
 unsigned long long int fireT;
 bool fillPSI = false;
 
+//initial setup code
 void setup() {
-  // put your setup code here, to run once:
-  
   //attach drive motors
   servoL.attach(9);
   servoR.attach(10);
-  
 
+  //set solenoid pins to HIGH
+  digitalWrite(13, HIGH);
+  digitalWrite(7, HIGH);
+  digitalWrite(12, HIGH);
+
+  //set serial Baud rate
   Serial.begin(9600);
   
   //initialize the receiver and cannon
   controller.init();
   cannon.init();
   
+  //check for connection
   Serial.println("Waiting for connection...");
   while (!controller.connected()) { delay(10); }
   Serial.println("Connected...");
@@ -36,14 +41,15 @@ void setup() {
   controller.setJoyDeadzone(0.08);
 }
 
+//main code
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  
   if (controller.connected()) {
 
     //call drive control function   
     joystickCrontrol();
 
+    //get PSI and update cannon class
     cannon.getPSI();
 
     //if fire button clicked and safety button clicked
@@ -56,7 +62,7 @@ void loop() {
 
     //if enough time passed since fire, close barrel
     if((millis() - fireT > fireDelay) && cannon.fired)
-      cannon.barrelClose();
+      cannon.barrelClose(); 
     
     //adjust angle based on input
     cannon.changeAngle( controller.joystick(LEFT, Y) / 50 );
@@ -65,26 +71,34 @@ void loop() {
     //if(button pressed)
     //fill to desired psi
     if(controller.dpad(RIGHT))
-      fillPSI = true;
+    {
+      if(fillPSI == true)
+        fillPSI = false;
+      else
+        fillPSI = true;
+    }
 
     if(fillPSI == true)
     {
       if(cannon.ballastFill())
         fillPSI = false;
     }
-    
+    else        //stops fill upon second press
+      cannon.stopFill();
+
     //call function to bleed PSI if ballast overfilled
-    cannon.ballastBleed();  
+    cannon.ballastBleed(controller.dpad(DOWN));  
 
     disconnected = false;
 
-  } else {
+  }
+  //if controller disconnects, print message 
+  else {
     if (!disconnected) {
       Serial.println("Disconnected! Waiting for reconnect...");
       disconnected = true;
     }
   }
-
 }
 
 

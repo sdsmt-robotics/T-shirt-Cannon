@@ -17,7 +17,6 @@ void Cannon::init()
     pinMode(fillPin, OUTPUT);
 }
 
-
 //writes angle of cannon given the parameter input/adjust angle from controller input
 void Cannon::setAngle(double input)
 {
@@ -26,7 +25,6 @@ void Cannon::setAngle(double input)
     //limits angle to set max and min
     if(angle > 90)
         angle = 90;
-
     if(angle < 35)
         angle = 35;
 
@@ -66,7 +64,7 @@ bool Cannon::barrelOpen()
 
     if(canFire)
     {
-        digitalWrite( relayPin, HIGH );
+        digitalWrite( relayPin, LOW );  //set low to fire
         fired = true;
         return true;
     }
@@ -77,29 +75,33 @@ bool Cannon::barrelOpen()
 //Will close the barrel
 void Cannon::barrelClose()
 {
-    digitalWrite( relayPin, LOW );
+    digitalWrite( relayPin, HIGH );     //set high to close
     fired = false;
 }
-
 
 //If ballast fill button is pressed, solenoid will open -- all else solenoid is closed
 bool Cannon::ballastFill()
 {
     if(PSI >= desiredPSI)
     {
-        digitalWrite( fillPin, LOW);
+        digitalWrite( fillPin, HIGH);   //set high to stop filling
         return true;
     }
 
-    digitalWrite( fillPin, HIGH );
+    digitalWrite( fillPin, LOW );       //set low to open solenoid
     return false;
 }
 
-//check PSI and bleed if needed
-void Cannon::ballastBleed()
+void Cannon::stopFill()
 {
-    if (PSI > upperPSI)
-        digitalWrite( bleedPin, HIGH );
+    digitalWrite(fillPin, HIGH);
+}
+
+//check PSI and bleed if needed
+void Cannon::ballastBleed(bool bleed)
+{
+    if ((PSI > upperPSI) || bleed)
+        digitalWrite( bleedPin, LOW );      //set Low to bleed
     else
-        digitalWrite( bleedPin, LOW );
+        digitalWrite( bleedPin, HIGH );     //set high to close bleed
 }
