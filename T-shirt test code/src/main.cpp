@@ -10,8 +10,8 @@ void joystickCrontrol();
 
 bool disconnected = false;
 const double ERRORCORRETIONL = 4;
-const int fireDelay = 200;
-unsigned long long int fireT;
+const int fireDelay = 500, fillDelay = 50;
+unsigned long long int fireT, fillT;
 bool fillPSI = false;
 
 //initial setup code
@@ -70,12 +70,14 @@ void loop() {
     //Increase PSI in tank
     //if(button pressed)
     //fill to desired psi
-    if(controller.dpad(RIGHT))
+    if(controller.dpad(RIGHT) && (millis()-fillT > fillDelay))
     {
       if(fillPSI == true)
         fillPSI = false;
       else
         fillPSI = true;
+
+      fillT = millis();
     }
 
     if(fillPSI == true)
@@ -90,7 +92,6 @@ void loop() {
     cannon.ballastBleed(controller.dpad(DOWN));  
 
     disconnected = false;
-
   }
   //if controller disconnects, print message 
   else {
@@ -100,7 +101,6 @@ void loop() {
     }
   }
 }
-
 
 //Drive control -- adjusts servos to mdpad(RIGHT)
 void joystickCrontrol()
