@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <Servo.h>
 #include <controller.h>
-#include <IBusBM.h>
+#include <../lib/IBusBM/IBusBM.h>
 
 class Cannon{
     
