@@ -3,8 +3,7 @@
 
 #include <Arduino.h>
 #include <Servo.h>
-#include <controller.h>
-#include <../lib/IBusBM/IBusBM.h>
+#include "IBusBM.h"
 
 class Cannon{
     

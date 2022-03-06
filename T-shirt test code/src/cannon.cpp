@@ -54,7 +54,7 @@ bool Cannon::checkSafe()
 double Cannon::getPSI()
 {
     PSI = ( analogRead(A0) * (5.0/1023)) * (200/5.0);
-    return 100;
+    return PSI;
 }
 
 //Checks if it is safe and able to fire, then opens the barrel
@@ -64,7 +64,7 @@ bool Cannon::barrelOpen()
 
     if(canFire)
     {
-        digitalWrite( relayPin, LOW );  //set low to fire
+        digitalWrite( relayPin, HIGH );  //set low to fire
         fired = true;
         return true;
     }
@@ -75,7 +75,7 @@ bool Cannon::barrelOpen()
 //Will close the barrel
 void Cannon::barrelClose()
 {
-    digitalWrite( relayPin, HIGH );     //set high to close
+    digitalWrite( relayPin, LOW );     //set high to close
     fired = false;
 }
 
@@ -84,24 +84,24 @@ bool Cannon::ballastFill()
 {
     if(PSI >= desiredPSI)
     {
-        digitalWrite( fillPin, HIGH);   //set high to stop filling
+        digitalWrite( fillPin, LOW);   //set high to stop filling
         return true;
     }
 
-    digitalWrite( fillPin, LOW );       //set low to open solenoid
+    digitalWrite( fillPin, HIGH );       //set low to open solenoid
     return false;
 }
 
 void Cannon::stopFill()
 {
-    digitalWrite(fillPin, HIGH);
+    digitalWrite(fillPin, LOW);
 }
 
 //check PSI and bleed if needed
 void Cannon::ballastBleed(bool bleed)
 {
     if ((PSI > upperPSI) || bleed)
-        digitalWrite( bleedPin, LOW );      //set Low to bleed
+        digitalWrite( bleedPin, HIGH );      //set Low to bleed
     else
-        digitalWrite( bleedPin, HIGH );     //set high to close bleed
+        digitalWrite( bleedPin, LOW );     //set high to close bleed
 }

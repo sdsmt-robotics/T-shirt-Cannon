@@ -1,15 +1,21 @@
 #include "cannon.h"
-#include <../lib/IBusBM/IBusBM.h>
 
 Servo servoL;
 Servo servoR;
-//Create the communications object. Use Serial for the communications.
-Controller controller(Serial3);
-Cannon cannon(11, 13, 7, 12);   //motor pin, fill pin, bleed pin, laser pin
+Cannon cannon(11, 8, 7, 12);   //motor pin, fill pin, bleed pin, fire pin
+
+//IBUS stuff
+IBusBM IBusServo;               //input for reading controller output
+IBusBM IBusSensor;              //output for sending sensor data
+const int safeChannel = 5;      //switch for safety
+const int fireChannel = 4;      //switch for firing
+const int fillBleed = 3;        //joystick, fill < 1500, bleed > 1500
+const int angleChannel = 2;     //joystick for angle adjustment
+const int driveF = 1;           //joystick for drive forward/backward
+const int driveLR = 0;          //joystick for left right drive
 
 void joystickCrontrol();
 
-bool disconnected = false;
 const double ERRORCORRETIONL = 4;
 const int fireDelay = 500, fillDelay = 50;
 unsigned long long int fireT, fillT;
@@ -17,35 +23,43 @@ bool fillPSI = false;
 
 //initial setup code
 void setup() {
+  //set serial Baud rate
+  Serial.begin(115200);
+
   //attach drive motors
   servoL.attach(9);
   servoR.attach(10);
 
-  //set solenoid pins to HIGH
-  digitalWrite(13, HIGH);
-  digitalWrite(7, HIGH);
-  digitalWrite(12, HIGH);
+  // iBUS setup
+  IBusServo.begin(Serial1);  
+  IBusSensor.begin(Serial2);
 
-  //set serial Baud rate
-  Serial.begin(9600);
+  //set solenoid pins to HIGH
+  digitalWrite(13, LOW);
+  digitalWrite(7, LOW);
+  digitalWrite(12, LOW);
+
   
   //initialize the receiver and cannon
-  controller.init();
   cannon.init();
   
-  //check for connection
-  Serial.println("Waiting for connection...");
-  while (!controller.connected()) { delay(10); }
-  Serial.println("Connected...");
+  //start IBUS monitor
+  Serial.println("Start monitoring Cannon code");
   
-  //set a deadzone for the joysticks
-  controller.setJoyDeadzone(0.08);
+  IBusSensor.addSensor(IBUS_PRESS);
+  
 }
 
 //main code
 void loop() {
-  
-  if (controller.connected()) {
+  // show first 8 servo channels
+  for (int i=0; i<8 ; i++) {
+    Serial.print(IBusServo.readChannel(i));
+    Serial.print(" ");
+  }
+  Serial.print("PSI=");
+  Serial.print(cannon.getPSI());
+
 
     //call drive control function   
     joystickCrontrol();
@@ -53,9 +67,16 @@ void loop() {
     //get PSI and update cannon class
     cannon.getPSI();
 
+    //FIXME sensor readint
+    //uint16_t speed=0;
+    //IBusSensor.setSensorMeasurement(1,uint16_t(cannon.getPSI()));
+
+
     //if fire button clicked and safety button clicked
-    if (controller.dpad(LEFT) && controller.button(UP) )
+    if ((IBusServo.readChannel(4) > 1900) && (IBusServo.readChannel(5) > 1900))
     {
+        Serial.print("Open cannon barrel");
+
       //if barrel oppened set fireT = program time
       if(cannon.barrelOpen())
         fireT = millis();
@@ -66,20 +87,15 @@ void loop() {
       cannon.barrelClose(); 
     
     //adjust angle based on input
-    cannon.changeAngle( controller.joystick(LEFT, Y) / 50 );
+    cannon.changeAngle( IBusServo.readChannel(angleChannel)/500); //FIXME adjust value
     
     //Increase PSI in tank
     //if(button pressed)
     //fill to desired psi
-    if(controller.dpad(RIGHT) && (millis()-fillT > fillDelay))
-    {
-      if(fillPSI == true)
-        fillPSI = false;
-      else
+    if(IBusServo.readChannel(fillBleed) < 1300 && (millis()-fillT > fillDelay))
         fillPSI = true;
-
-      fillT = millis();
-    }
+    else
+        fillPSI = false;
 
     if(fillPSI == true)
     {
@@ -90,24 +106,15 @@ void loop() {
       cannon.stopFill();
 
     //call function to bleed PSI if ballast overfilled
-    cannon.ballastBleed(controller.dpad(DOWN));  
-
-    disconnected = false;
-  }
-  //if controller disconnects, print message 
-  else {
-    if (!disconnected) {
-      Serial.println("Disconnected! Waiting for reconnect...");
-      disconnected = true;
-    }
-  }
+    cannon.ballastBleed(IBusServo.readChannel(fillBleed) > 1700);  
+    Serial.print('\n');
 }
 
 //Drive control -- adjusts servos to mdpad(RIGHT)
 void joystickCrontrol()
 {
-  double speedF = controller.joystick(RIGHT, Y) * 70 + 90;
-  double speedLR = ( controller.joystick(RIGHT, X) * 70 * -1 );
+  double speedF = IBusServo.readChannel(driveF) * 70 + 90;
+  double speedLR = ( IBusServo.readChannel(driveLR) * 70 * -1 );
 
   servoL.write( ( ( 180 - speedF ) + ERRORCORRETIONL + speedLR ) );
   servoR.write( ( ( speedF ) + ERRORCORRETIONL + speedLR ) );
