@@ -53,7 +53,13 @@ bool Cannon::checkSafe()
 //update and return the PSI
 double Cannon::getPSI()
 {
-    PSI = ( analogRead(A0) * (5.0/1023)) * (200/5.0);
+    PSI = (analogRead(A0)-100)/3.0714;  //gets approximate PSI
+
+    if(PSI < 0)                         //makes output nicer
+        PSI = 0;
+    else if (PSI > 55)                  //corrects variation at higher pressures
+        PSI -= (PSI-50)/10;
+
     return PSI;
 }
 

@@ -57,6 +57,7 @@ void loop() {
     Serial.print(IBusServo.readChannel(i));
     Serial.print(" ");
   }
+  delay(50);
   Serial.print("PSI=");
   Serial.print(cannon.getPSI());
 

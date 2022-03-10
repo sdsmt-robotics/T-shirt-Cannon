@@ -15,7 +15,7 @@ private:
     double angle = 90;
     double PSI;
     double desiredPSI = 100;
-    double lowerPSI = 40;
+    double lowerPSI = 30;
     double upperPSI = 150;
     bool canFire = false;
     Servo cannon;
