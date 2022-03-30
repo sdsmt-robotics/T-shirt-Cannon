@@ -77,15 +77,18 @@ void loop() {
     if ((IBusServo.readChannel(4) > 1900) && (IBusServo.readChannel(5) > 1900))
     {
         Serial.print("Open cannon barrel");
+        cannon.barrelOpen();
 
       //if barrel oppened set fireT = program time
-      if(cannon.barrelOpen())
-        fireT = millis();
+      //if(cannon.barrelOpen())
+      //  fireT = millis();
     }
+    else  
+      cannon.barrelClose();     //FIXME adjust so shell will eject after set time
 
     //if enough time passed since fire, close barrel
-    if((millis() - fireT > fireDelay) && cannon.fired)
-      cannon.barrelClose(); 
+    //if((millis() - fireT > fireDelay) && cannon.fired)
+    //  cannon.barrelClose(); 
     
     //adjust angle based on input
     cannon.changeAngle( IBusServo.readChannel(angleChannel)/500); //FIXME adjust value
