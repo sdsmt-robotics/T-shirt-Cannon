@@ -20,6 +20,7 @@ const double ERRORCORRETIONL = 4;
 const int fireDelay = 500, fillDelay = 50;
 unsigned long long int fireT, fillT;
 bool fillPSI = false;
+bool fireSwitch = false;
 
 //initial setup code
 void setup() {
@@ -34,11 +35,10 @@ void setup() {
   IBusServo.begin(Serial1);  
   IBusSensor.begin(Serial2);
 
-  //set solenoid pins to HIGH
+  //set solenoid pins to LOW
   digitalWrite(13, LOW);
   digitalWrite(7, LOW);
   digitalWrite(12, LOW);
-
   
   //initialize the receiver and cannon
   cannon.init();
@@ -46,8 +46,8 @@ void setup() {
   //start IBUS monitor
   Serial.println("Start monitoring Cannon code");
   
+  //set up pressure sensor
   IBusSensor.addSensor(IBUS_PRESS);
-  
 }
 
 //main code
@@ -61,7 +61,6 @@ void loop() {
   Serial.print("PSI=");
   Serial.print(cannon.getPSI());
 
-
     //call drive control function   
     joystickCrontrol();
 
@@ -72,23 +71,21 @@ void loop() {
     //uint16_t speed=0;
     //IBusSensor.setSensorMeasurement(1,uint16_t(cannon.getPSI()));
 
-
-    //if fire button clicked and safety button clicked
-    if ((IBusServo.readChannel(4) > 1900) && (IBusServo.readChannel(5) > 1900))
+    //run barrelOpen when switch flips from off to on
+    if ((IBusServo.readChannel(4) > 1900) && (IBusServo.readChannel(5) > 1900) && fireSwitch = false)
     {
-        Serial.print("Open cannon barrel");
-        cannon.barrelOpen();
+      fireSwitch = true;  //don't run this if statement until one switch is put down
 
       //if barrel oppened set fireT = program time
-      //if(cannon.barrelOpen())
-      //  fireT = millis();
+      if(cannon.barrelOpen() )
+        fireT = millis();
     }
-    else  
-      cannon.barrelClose();     //FIXME adjust so shell will eject after set time
+    else if ((IBusServo.readChannel(4) < 1900) || (IBusServo.readChannel(5) < 1900))
+      fireSwitch = false;
 
     //if enough time passed since fire, close barrel
-    //if((millis() - fireT > fireDelay) && cannon.fired)
-    //  cannon.barrelClose(); 
+    if(millis() - fireT > fireDelay && cannon.fired = true)
+      cannon.barrelClose();  
     
     //adjust angle based on input
     cannon.changeAngle( IBusServo.readChannel(angleChannel)/500); //FIXME adjust value
